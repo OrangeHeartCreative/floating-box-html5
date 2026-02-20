@@ -1,0 +1,53 @@
+html,body{height:100%;margin:0}
+body{display:flex;align-items:center;justify-content:center;background:#000;overflow:hidden;font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial}
+/* responsive game wrapper to match itch.io recommended embed 960x640 */
+.game-wrap{width:100%;max-width:960px;aspect-ratio:960/640;position:relative}
+canvas{position:absolute;inset:0;width:100%;height:100%;display:block;background:#000}
+
+/* small UI hint */
+.hint{position:fixed;left:12px;bottom:12px;color:rgba(255,255,255,0.75);font-size:13px}
+
+.airtime{position:fixed;right:12px;top:12px;background:rgba(255,255,255,0.06);color:#fff;padding:8px 10px;border-radius:8px;font-size:13px;backdrop-filter:blur(6px)}
+
+.score{position:fixed;left:12px;top:12px;background:rgba(255,255,255,0.04);color:#fff;padding:8px 10px;border-radius:8px;font-size:13px;backdrop-filter:blur(6px)}
+
+/* Game over overlay */
+.overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(2px);visibility:hidden;opacity:0;transition:opacity .18s,visibility .18s}
+.overlay[aria-hidden="false"]{visibility:visible;opacity:1}
+.overlay .panel{background:linear-gradient(180deg,#0f1724,#0b1220);color:#fff;padding:22px;border-radius:12px;min-width:280px;box-shadow:0 8px 30px rgba(2,6,23,0.6);text-align:center}
+.overlay h1{margin:0 0 8px;font-size:22px}
+.overlay .final-air{margin-bottom:10px}
+.overlay label{display:block;margin-bottom:6px;font-size:13px;color:#c7d2fe}
+.overlay input{width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.02);color:#fff;text-transform:uppercase;letter-spacing:1px;text-align:center;font-weight:600}
+.overlay .buttons{display:flex;gap:8px;margin-top:12px}
+.overlay button{flex:1;padding:8px 10px;border-radius:8px;border:0;background:#2563eb;color:#fff;cursor:pointer}
+.overlay button#restart{background:#374151}
+
+/* Leaderboard inside overlay */
+.leaderboard{margin-top:12px;text-align:left}
+.leaderboard h2{margin:6px 0 8px;font-size:14px;color:#e0e7ff}
+.leaderboard ol{margin:0;padding:0;list-style-position:inside;max-height:220px;overflow:auto}
+.leaderboard li{padding:8px 10px;border-radius:8px;background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.leaderboard .name{font-weight:700;letter-spacing:1px}
+.leaderboard .meta{opacity:0.95;color:#fff;display:flex;gap:10px;align-items:center}
+.leaderboard .airtime-val{font-weight:700;color:#fff}
+.leaderboard .points-val{opacity:0.95;color:#fff}
+.leaderboard .medal{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:13px;color:#111;font-weight:800;margin-right:8px}
+.leaderboard li.top1 .medal{background:#ffd54d}
+.leaderboard li.top2 .medal{background:#c0c0c0}
+.leaderboard li.top3 .medal{background:#cd7f32}
+.leaderboard-header{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.leaderboard-controls{display:flex;gap:8px}
+.clear-btn{background:transparent;border:1px solid rgba(255,255,255,0.08);color:#fff;padding:6px 8px;border-radius:8px;cursor:pointer}
+.clear-btn:hover{background:rgba(255,255,255,0.03)}
+.leaderboard-empty{margin-top:8px;color:rgba(255,255,255,0.6);font-size:13px}
+
+/* Confirmation modal */
+.confirm-modal{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);visibility:hidden;opacity:0;transition:opacity .15s,visibility .15s}
+.confirm-modal[aria-hidden="false"]{visibility:visible;opacity:1}
+.confirm-panel{background:linear-gradient(180deg,#0f1724,#0b1220);color:#fff;padding:18px 20px;border-radius:10px;min-width:280px;box-shadow:0 8px 30px rgba(0,0,0,0.6);text-align:center}
+.confirm-panel p{margin:0 0 12px;font-size:15px}
+.confirm-buttons{display:flex;gap:10px;justify-content:center}
+.confirm-yes{background:#10b981;border:0;color:#062017;padding:8px 12px;border-radius:8px;cursor:pointer}
+.confirm-no{background:transparent;border:1px solid rgba(255,255,255,0.08);color:#fff;padding:8px 12px;border-radius:8px;cursor:pointer}
+.save-msg{margin-top:8px;color:#bbf7d0;font-size:13px;min-height:18px}
