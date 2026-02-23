@@ -34,6 +34,8 @@ Airtime
 - Improved game robustness and maintainability
 - Fixed all known gameplay bugs and improved collision/physics accuracy
 - Enhanced security and code quality for future extensibility
+- Fixed critical syntax errors (extra braces) that caused the game to not load (black screen)
+- Restored full game functionality and rendering
 
 ### Gameplay Changes
 - Leaderboard now saves top 50 scores, sorted by airtime and points
@@ -43,5 +45,5 @@ Airtime
 - Audio feedback is more reliable and robust
 - Game is now more resistant to exploits and browser quirks
 
-These changes make the game more secure, fair, and enjoyable, while ensuring the codebase is robust and maintainable for future updates.
+These changes make the game more secure, fair, and enjoyable, while ensuring the codebase is robust and maintainable for future updates. The most recent fixes resolved a critical bug that prevented the game from running, so the game is now fully functional again.
 
