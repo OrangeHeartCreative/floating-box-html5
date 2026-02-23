@@ -2,16 +2,20 @@
 
 // Secure random number helpers
 function getRandomInt(min, max) {
+  // Ensure min and max are integers
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  if (max < min) return min;
   const range = max - min + 1;
   const randomBuffer = new Uint32Array(1);
   window.crypto.getRandomValues(randomBuffer);
   return min + (randomBuffer[0] % range);
 }
 function getRandomFloat(min, max) {
+  // Use canonical max uint32 value
   const randomBuffer = new Uint32Array(1);
   window.crypto.getRandomValues(randomBuffer);
-  // Use Number.MAX_SAFE_INTEGER for canonical max uint32 value
-  const MAX_UINT32 = 4294967295;
+  const MAX_UINT32 = 4294967295.0;
   const random = randomBuffer[0] / (MAX_UINT32 + 1);
   return min + random * (max - min);
 }
@@ -39,12 +43,12 @@ function playThrust() {
     o.type = 'sawtooth';
     o.frequency.value = 180 + getRandomFloat(0, 60);
     // Use canonical form for small value
-    g.gain.value = 1e-4;
+    g.gain.value = 0.0001;
     o.connect(g);
     g.connect(audioCtx.destination);
     const now = audioCtx.currentTime;
     g.gain.linearRampToValueAtTime(0.12, now + 0.005);
-    g.gain.exponentialRampToValueAtTime(1e-4, now + 0.22);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
     o.start(now);
     o.stop(now + 0.25);
   } catch (e) { /* silently fail if not allowed */ }
@@ -57,12 +61,12 @@ function playHit() {
     const g = audioCtx.createGain();
     o.type = 'square';
     o.frequency.value = 300 + getRandomFloat(0, 700);
-    g.gain.value = 1e-4;
+    g.gain.value = 0.0001;
     o.connect(g);
     g.connect(audioCtx.destination);
     const now = audioCtx.currentTime;
     g.gain.linearRampToValueAtTime(0.16, now + 0.002);
-    g.gain.exponentialRampToValueAtTime(1e-4, now + 0.35);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
     o.start(now);
     o.stop(now + 0.36);
   } catch (e) {}
@@ -90,12 +94,12 @@ function resize(){
   const rect = wrapper.getBoundingClientRect();
   const dpr = Math.max(1, window.devicePixelRatio || 1);
   viewW = Math.max(64, Math.floor(rect.width));
-  viewH = Math.max(64, Math.floor(rect.height));
+    g.gain.value = 0.0001;
   canvas.style.width = viewW + 'px';
   canvas.style.height = viewH + 'px';
   canvas.width = Math.floor(viewW * dpr);
   canvas.height = Math.floor(viewH * dpr);
-  // scale drawing so coordinates use CSS pixels
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
   ctx.setTransform(dpr,0,0,dpr,0,0);
 }
 window.addEventListener('resize', resize);
@@ -258,7 +262,6 @@ const confirmText = document.getElementById('confirmText');
 const confirmYes = document.getElementById('confirmYes');
 const confirmNo = document.getElementById('confirmNo');
 let inAir = false;
-// Removed unused variable 'airtimeStart'
 let currentAirtime = 0;
 let bestAirtime = 0;
 let gameOverShown = false;
@@ -310,37 +313,45 @@ function saveScore(entry){
   return trimmed;
 }
 
-function renderLeaderboard(){
+function renderLeaderboard() {
   const listEl = document.getElementById('scoresList');
   if (!listEl) return;
   const scores = loadScores();
-  // console.debug('renderLeaderboard loaded scores', scores);
   listEl.innerHTML = '';
   if (!scores.length) {
     if (leaderboardEmptyEl) leaderboardEmptyEl.style.display = 'block';
     return;
   }
   if (leaderboardEmptyEl) leaderboardEmptyEl.style.display = 'none';
-  let idx = 0;
-  for (const s of scores){
+  scores.slice(0, 50).forEach((s, idx) => {
     const li = document.createElement('li');
-    if (idx===0) li.classList.add('top1');
-    else if (idx===1) li.classList.add('top2');
-    else if (idx===2) li.classList.add('top3');
-    const medal = document.createElement('span'); medal.className='medal'; medal.textContent = idx<3 ? (idx+1) : '';
-    const name = document.createElement('span'); name.className='name'; name.textContent = s.initials || '---';
+    if (idx === 0) li.classList.add('top1');
+    else if (idx === 1) li.classList.add('top2');
+    else if (idx === 2) li.classList.add('top3');
+    const medal = document.createElement('span');
+    medal.className = 'medal';
+    medal.textContent = idx < 3 ? (idx + 1) : '';
+    const name = document.createElement('span');
+    name.className = 'name';
+    name.textContent = s.initials || '---';
     const airtimeNum = Number(s.airtime) || 0;
     const pointsNum = Number(s.points) || 0;
-    const meta = document.createElement('span'); meta.className='meta';
-    const airt = document.createElement('span'); airt.className = 'airtime-val'; airt.textContent = `${airtimeNum.toFixed(2)}s`;
-    const pts = document.createElement('span'); pts.className = 'points-val'; pts.textContent = `${pointsNum}pts`;
-    meta.appendChild(airt); meta.appendChild(document.createTextNode(' • ')); meta.appendChild(pts);
+    const meta = document.createElement('span');
+    meta.className = 'meta';
+    const airt = document.createElement('span');
+    airt.className = 'airtime-val';
+    airt.textContent = `${airtimeNum.toFixed(2)}s`;
+    const pts = document.createElement('span');
+    pts.className = 'points-val';
+    pts.textContent = `${pointsNum}pts`;
+    meta.appendChild(airt);
+    meta.appendChild(document.createTextNode(' • '));
+    meta.appendChild(pts);
     li.appendChild(medal);
     li.appendChild(name);
     li.appendChild(meta);
     listEl.appendChild(li);
-    idx++;
-  }
+  });
 }
 
 // allow Enter in initials to submit
@@ -652,23 +663,22 @@ submitBtn.addEventListener('click', () => {
   console.log('Score submitted', { initials, airtime: airtimeVal, points: pointsVal, rank: idx+1 });
 });
 
-function showConfirm(message, onConfirm){
+function showConfirm(message, onConfirm) {
   if (!confirmModal) return onConfirm();
   confirmText.textContent = message;
-  confirmModal.setAttribute('aria-hidden','false');
-  // focus management
+  confirmModal.setAttribute('aria-hidden', 'false');
   if (confirmYes) confirmYes.focus();
 
-  function cleanup(){
-    if (confirmModal) confirmModal.setAttribute('aria-hidden','true');
+  function cleanup() {
+    if (confirmModal) confirmModal.setAttribute('aria-hidden', 'true');
     confirmYes.removeEventListener('click', yesHandler);
     confirmNo.removeEventListener('click', noHandler);
     window.removeEventListener('keydown', escHandler);
   }
 
-  function yesHandler(){ cleanup(); onConfirm(); }
-  function noHandler(){ cleanup(); }
-  function escHandler(e){ if (e.key === 'Escape') { cleanup(); } }
+  function yesHandler() { cleanup(); onConfirm(); }
+  function noHandler() { cleanup(); }
+  function escHandler(e) { if (e.key === 'Escape') { cleanup(); } }
 
   confirmYes.addEventListener('click', yesHandler);
   confirmNo.addEventListener('click', noHandler);
