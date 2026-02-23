@@ -94,12 +94,11 @@ function resize(){
   const rect = wrapper.getBoundingClientRect();
   const dpr = Math.max(1, window.devicePixelRatio || 1);
   viewW = Math.max(64, Math.floor(rect.width));
-    g.gain.value = 0.0001;
+  viewH = Math.max(64, Math.floor(rect.height));
   canvas.style.width = viewW + 'px';
   canvas.style.height = viewH + 'px';
   canvas.width = Math.floor(viewW * dpr);
   canvas.height = Math.floor(viewH * dpr);
-    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
   ctx.setTransform(dpr,0,0,dpr,0,0);
 }
 window.addEventListener('resize', resize);
@@ -201,7 +200,6 @@ function spawnObstacles(){
     const points = Math.max(1, Math.round((120 - w) / 10));
     obstacles.push({x,y,w,h,color,points});
   }
-  }
 }
 
 function createDisintegrate(ob){
@@ -226,7 +224,6 @@ function createDisintegrate(ob){
     const rot = getRandomFloat(0, Math.PI*2);
     const drot = getRandomFloat(-5, 5);
     particles.push({x:px,y:py,vx,vy,size,life,ttl:life,color:col,rot,drot});
-  }
   }
 }
 
