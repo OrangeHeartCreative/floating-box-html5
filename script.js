@@ -1,3 +1,20 @@
+/* global document, window, performance, localStorage, requestAnimationFrame, console */
+
+// Secure random number helpers
+function getRandomInt(min, max) {
+  const range = max - min + 1;
+  const randomBuffer = new Uint32Array(1);
+  window.crypto.getRandomValues(randomBuffer);
+  return min + (randomBuffer[0] % range);
+}
+function getRandomFloat(min, max) {
+  const randomBuffer = new Uint32Array(1);
+  window.crypto.getRandomValues(randomBuffer);
+  // Use Number.MAX_SAFE_INTEGER for canonical max uint32 value
+  const MAX_UINT32 = 4294967295;
+  const random = randomBuffer[0] / (MAX_UINT32 + 1);
+  return min + random * (max - min);
+}
 const canvas = document.getElementById('game');
 const wrapper = document.getElementById('gameWrap') || document.body;
 const ctx = canvas.getContext('2d');
@@ -20,13 +37,14 @@ function playThrust() {
     const o = audioCtx.createOscillator();
     const g = audioCtx.createGain();
     o.type = 'sawtooth';
-    o.frequency.value = 180 + Math.random() * 60;
-    g.gain.value = 0.0001;
+    o.frequency.value = 180 + getRandomFloat(0, 60);
+    // Use canonical form for small value
+    g.gain.value = 1e-4;
     o.connect(g);
     g.connect(audioCtx.destination);
     const now = audioCtx.currentTime;
     g.gain.linearRampToValueAtTime(0.12, now + 0.005);
-    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+    g.gain.exponentialRampToValueAtTime(1e-4, now + 0.22);
     o.start(now);
     o.stop(now + 0.25);
   } catch (e) { /* silently fail if not allowed */ }
@@ -38,13 +56,13 @@ function playHit() {
     const o = audioCtx.createOscillator();
     const g = audioCtx.createGain();
     o.type = 'square';
-    o.frequency.value = 300 + Math.random() * 700;
-    g.gain.value = 0.0001;
+    o.frequency.value = 300 + getRandomFloat(0, 700);
+    g.gain.value = 1e-4;
     o.connect(g);
     g.connect(audioCtx.destination);
     const now = audioCtx.currentTime;
     g.gain.linearRampToValueAtTime(0.16, now + 0.002);
-    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+    g.gain.exponentialRampToValueAtTime(1e-4, now + 0.35);
     o.start(now);
     o.stop(now + 0.36);
   } catch (e) {}
@@ -57,7 +75,7 @@ function playSubmit() {
     const g = audioCtx.createGain();
     o.type = 'triangle';
     o.frequency.value = 440;
-    g.gain.value = 0.0001;
+    g.gain.value = 1e-4;
     o.connect(g);
     g.connect(audioCtx.destination);
     const now = audioCtx.currentTime;
@@ -170,14 +188,15 @@ function spawnObstacles(){
   const spawnMinY = Math.max(24, baseY - layout.obstacleBand);
   const spawnMaxY = Math.max(spawnMinY + 24, baseY - 40);
   for (let i=0;i<count;i++){
-    const w = 40 + Math.random()*80;
-    const h = 18 + Math.random()*30;
-    const x = Math.random() * Math.max(0, viewW - w);
-    const y = spawnMinY + Math.random() * (spawnMaxY - spawnMinY);
+    const w = 40 + getRandomFloat(0, 80);
+    const h = 18 + getRandomFloat(0, 30);
+    const x = getRandomFloat(0, Math.max(0, viewW - w));
+    const y = spawnMinY + getRandomFloat(0, spawnMaxY - spawnMinY);
     const colors = ['#ef4444','#f97316','#f59e0b','#10b981','#3b82f6','#8b5cf6'];
-    const color = colors[Math.floor(Math.random()*colors.length)];
+    const color = colors[getRandomInt(0, colors.length - 1)];
     const points = Math.max(1, Math.round((120 - w) / 10));
     obstacles.push({x,y,w,h,color,points});
+  }
   }
 }
 
@@ -186,23 +205,24 @@ function createDisintegrate(ob){
   const count = Math.min(120, Math.max(12, Math.round(area / 150)));
   const baseColor = ob.color || '#ffffff';
   for (let i=0;i<count;i++){
-    const px = ob.x + Math.random()*ob.w;
-    const py = ob.y + Math.random()*ob.h;
-    const ang = Math.random()*Math.PI*2;
-    const sp = 30 + Math.random()*260;
-    const vx = Math.cos(ang) * sp * (0.6 + Math.random()*0.9);
-    const vy = Math.sin(ang) * sp * (0.4 + Math.random()*0.9) - 40 * Math.random();
-    const size = 2 + Math.random()*6;
-    const life = 0.6 + Math.random()*1.0;
+    const px = ob.x + getRandomFloat(0, ob.w);
+    const py = ob.y + getRandomFloat(0, ob.h);
+    const ang = getRandomFloat(0, Math.PI*2);
+    const sp = 30 + getRandomFloat(0, 260);
+    const vx = Math.cos(ang) * sp * (0.6 + getRandomFloat(0, 0.9));
+    const vy = Math.sin(ang) * sp * (0.4 + getRandomFloat(0, 0.9)) - 40 * getRandomFloat(0, 1);
+    const size = 2 + getRandomFloat(0, 6);
+    const life = 0.6 + getRandomFloat(0, 1.0);
     const rgb = hexToRgb(baseColor);
     // slight tint variation
-    const r = Math.max(0, Math.min(255, rgb.r + Math.floor((Math.random()-0.5)*60)));
-    const g = Math.max(0, Math.min(255, rgb.g + Math.floor((Math.random()-0.5)*60)));
-    const b = Math.max(0, Math.min(255, rgb.b + Math.floor((Math.random()-0.5)*60)));
+    const r = Math.max(0, Math.min(255, rgb.r + Math.floor((getRandomFloat(-0.5,0.5))*60)));
+    const g = Math.max(0, Math.min(255, rgb.g + Math.floor((getRandomFloat(-0.5,0.5))*60)));
+    const b = Math.max(0, Math.min(255, rgb.b + Math.floor((getRandomFloat(-0.5,0.5))*60)));
     const col = `rgb(${r},${g},${b})`;
-    const rot = Math.random()*Math.PI*2;
-    const drot = (Math.random()-0.5)*10;
+    const rot = getRandomFloat(0, Math.PI*2);
+    const drot = getRandomFloat(-5, 5);
     particles.push({x:px,y:py,vx,vy,size,life,ttl:life,color:col,rot,drot});
+  }
   }
 }
 
@@ -238,7 +258,7 @@ const confirmText = document.getElementById('confirmText');
 const confirmYes = document.getElementById('confirmYes');
 const confirmNo = document.getElementById('confirmNo');
 let inAir = false;
-let airtimeStart = 0;
+// Removed unused variable 'airtimeStart'
 let currentAirtime = 0;
 let bestAirtime = 0;
 let gameOverShown = false;
@@ -294,20 +314,20 @@ function renderLeaderboard(){
   const listEl = document.getElementById('scoresList');
   if (!listEl) return;
   const scores = loadScores();
-  console.debug('renderLeaderboard loaded scores', scores);
+  // console.debug('renderLeaderboard loaded scores', scores);
   listEl.innerHTML = '';
   if (!scores.length) {
     if (leaderboardEmptyEl) leaderboardEmptyEl.style.display = 'block';
     return;
   }
   if (leaderboardEmptyEl) leaderboardEmptyEl.style.display = 'none';
-  for (let i=0;i<scores.length;i++){
-    const s = scores[i];
+  let idx = 0;
+  for (const s of scores){
     const li = document.createElement('li');
-    if (i===0) li.classList.add('top1');
-    else if (i===1) li.classList.add('top2');
-    else if (i===2) li.classList.add('top3');
-    const medal = document.createElement('span'); medal.className='medal'; medal.textContent = i<3 ? (i+1) : '';
+    if (idx===0) li.classList.add('top1');
+    else if (idx===1) li.classList.add('top2');
+    else if (idx===2) li.classList.add('top3');
+    const medal = document.createElement('span'); medal.className='medal'; medal.textContent = idx<3 ? (idx+1) : '';
     const name = document.createElement('span'); name.className='name'; name.textContent = s.initials || '---';
     const airtimeNum = Number(s.airtime) || 0;
     const pointsNum = Number(s.points) || 0;
@@ -319,6 +339,7 @@ function renderLeaderboard(){
     li.appendChild(name);
     li.appendChild(meta);
     listEl.appendChild(li);
+    idx++;
   }
 }
 
@@ -461,7 +482,7 @@ function draw(){
     const groundColor = (obstacles && obstacles.length) ? obstacles[0].color : '#3b82f6';
     const gGrad = ctx.createLinearGradient(0, groundTop, 0, viewH);
     // stronger top tint to make the ground visually obvious
-    gGrad.addColorStop(0, hexToRgba(groundColor, 0.80));
+    gGrad.addColorStop(0, hexToRgba(groundColor, 0.8)); // canonical form
     gGrad.addColorStop(1, hexToRgba(groundColor, 0.28));
     ctx.fillStyle = gGrad;
     ctx.fillRect(0, groundTop, viewW, viewH - groundTop);
@@ -479,7 +500,7 @@ function draw(){
     ctx.fillRect(0, groundTop - 4, viewW, 4);
 
     // subtle stripes for texture (slightly tinted)
-    ctx.fillStyle = hexToRgba(groundColor, 0.10);
+    ctx.fillStyle = hexToRgba(groundColor, 0.1); // canonical form
     for (let y = groundTop + 8; y < viewH; y += 10) {
       ctx.fillRect(0, y, viewW, 1);
     }
@@ -490,7 +511,7 @@ function draw(){
   const rimColor = (obstacles && obstacles.length) ? obstacles[0].color : '#3b82f6';
   ctx.fillStyle = hexToRgba(rimColor, 0.95);
   ctx.fillRect(0, viewH - fallbackHeight, viewW, 6);
-  ctx.fillStyle = hexToRgba(rimColor, 0.20);
+  ctx.fillStyle = hexToRgba(rimColor, 0.2); // canonical form
   ctx.fillRect(0, viewH - fallbackHeight + 6, viewW, fallbackHeight - 6);
 
   // draw obstacles
@@ -521,8 +542,7 @@ function draw(){
   }
 
   // draw particles
-  for (let i = 0; i < particles.length; i++){
-    const p = particles[i];
+  for (const p of particles){
     const t = Math.max(0, Math.min(1, p.life / p.ttl));
     ctx.save();
     ctx.globalAlpha = t;
