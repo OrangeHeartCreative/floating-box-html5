@@ -33,8 +33,6 @@ python3 -m http.server 8000
 
 - `Space` or click/tap: thrust (upward impulse)
 - Left/Right arrows or `A` / `D`: move left/right
-=======
->>>>>>> 1f96d87b1c0f8627443e9eed8e7f00c20f2e29c4
 - `P`: pause / resume
 
 ## Leaderboard
@@ -84,8 +82,3 @@ ffmpeg -i floating-box-trailer.webm -c:v libx264 -crf 18 -preset medium trailer.
 - Spawn logic: obstacles are placed to avoid overlapping on spawn (attempts multiple placements), preventing immediate collisions at start.
 - Added `test_smoke.html` and `record_walkthrough.html` to aid validation and create trailers.
 - Fixed start/title flow and improved obstacle behavior.
-
----
-
-If you'd like, I can open a pull request with this change.
->>>>>>> 1f96d87b1c0f8627443e9eed8e7f00c20f2e29c4
