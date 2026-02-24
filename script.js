@@ -133,11 +133,22 @@ let gameStarted = false;
 
 // Controls: click/Space to thrust; Arrow keys / A D for horizontal movement
 const controls = { left: false, right: false };
-canvas.removeEventListener('click', (e) => {
+
+// Click / touch handler for thrust (keep a named reference so it can be removed later)
+function handleClickThrust(e) {
+  // If the initials input is focused, allow normal typing
+  if (initialsEl && document.activeElement === initialsEl) return;
+  // ignore input until the game has started
+  if (!gameStarted) return;
+  try { if (e && typeof e.preventDefault === 'function') e.preventDefault(); } catch (err) {}
   box.vy -= physics.thrust;
+  if (!inAir) { inAir = true; currentAirtime = 0; }
   try { if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); } catch(e){}
   playThrust();
-});
+}
+
+canvas.addEventListener('click', handleClickThrust);
+canvas.addEventListener('touchstart', handleClickThrust, { passive: false });
 
 window.addEventListener('keydown', (e) => {
   // If the initials input is focused, allow normal typing (don't treat A/D as controls)
@@ -428,8 +439,13 @@ function update(dt){
     // vertical drift (clamped to the obstacle spawn band)
     if (ob.dy) {
       ob.y += ob.dy * dt;
-      if (ob.y < ob.spawnMinY) { ob.y = ob.spawnMinY; ob.dy = Math.abs(ob.dy); }
-      if (ob.y + ob.h > ob.spawnMaxY) { ob.y = ob.spawnMaxY - ob.h; ob.dy = -Math.abs(ob.dy); }
+      const bandH = ob.spawnMaxY - ob.spawnMinY;
+      if (bandH > ob.h) {
+        if (ob.y < ob.spawnMinY) { ob.y = ob.spawnMinY; ob.dy = Math.abs(ob.dy); }
+        if (ob.y + ob.h > ob.spawnMaxY) { ob.y = ob.spawnMaxY - ob.h; ob.dy = -Math.abs(ob.dy); }
+      } else {
+        ob.y = ob.spawnMinY; ob.dy = 0; // obstacle fills the band; pin it
+      }
     }
   }
 
@@ -736,9 +752,9 @@ restartBtn.addEventListener('click', () => {
 const titleScreen = document.getElementById('titleScreen');
 const startGameButton = document.getElementById('startGame');
 
-startGameButton.addEventListener('click', () => {
+if (startGameButton) startGameButton.addEventListener('click', () => {
   // hide title overlay and show the canvas inside the play area
-  titleScreen.style.display = 'none';
+  if (titleScreen) titleScreen.style.display = 'none';
   const canvasEl = document.getElementById('game');
   if (canvasEl) canvasEl.style.display = 'block';
   // Now that the canvas is visible, resize canvas and set up the game properly
@@ -747,6 +763,7 @@ startGameButton.addEventListener('click', () => {
   spawnObstacles();
   gameStarted = true;
   paused = false;
+});
   last = performance.now();
 });
 
