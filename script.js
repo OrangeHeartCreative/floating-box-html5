@@ -109,7 +109,7 @@ resize();
 const physics = {
   gravity: 980, // px/s^2
   damping: 0.7, // bounce damping
-  thrust: 420, // impulse applied on click/space
+  thrust: 420, // impulse applied on space
 };
 
 const box = {
@@ -131,24 +131,11 @@ let last = performance.now();
 let paused = false;
 let gameStarted = false;
 
-// Controls: click/Space to thrust; Arrow keys / A D for horizontal movement
+// Controls: Space to thrust; Arrow keys / A D for horizontal movement
 const controls = { left: false, right: false };
 
-// Click / touch handler for thrust (keep a named reference so it can be removed later)
-function handleClickThrust(e) {
-  // If the initials input is focused, allow normal typing
-  if (initialsEl && document.activeElement === initialsEl) return;
-  // ignore input until the game has started
-  if (!gameStarted) return;
-  try { if (e && typeof e.preventDefault === 'function') e.preventDefault(); } catch (err) {}
-  box.vy -= physics.thrust;
-  if (!inAir) { inAir = true; currentAirtime = 0; }
-  try { if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); } catch(e){}
-  playThrust();
-}
 
-canvas.addEventListener('click', handleClickThrust);
-canvas.addEventListener('touchstart', handleClickThrust, { passive: false });
+
 
 window.addEventListener('keydown', (e) => {
   // If the initials input is focused, allow normal typing (don't treat A/D as controls)
@@ -292,12 +279,7 @@ const finalAirEl = document.getElementById('final-air');
 const initialsEl = document.getElementById('initials');
 const submitBtn = document.getElementById('submitScore');
 const restartBtn = document.getElementById('restart');
-const clearBtn = document.getElementById('clearLeaderboard');
 const leaderboardEmptyEl = document.getElementById('leaderboardEmpty');
-const confirmModal = document.getElementById('confirmModal');
-const confirmText = document.getElementById('confirmText');
-const confirmYes = document.getElementById('confirmYes');
-const confirmNo = document.getElementById('confirmNo');
 let inAir = false;
 let currentAirtime = 0;
 let bestAirtime = 0;
@@ -762,38 +744,7 @@ if (submitBtn) {
   });
 }
 
-function showConfirm(message, onConfirm) {
-  if (!confirmModal) return onConfirm();
-  confirmText.textContent = message;
-  confirmModal.setAttribute('aria-hidden', 'false');
-  if (confirmYes) confirmYes.focus();
 
-  function cleanup() {
-    if (confirmModal) confirmModal.setAttribute('aria-hidden', 'true');
-    confirmYes.removeEventListener('click', yesHandler);
-    confirmNo.removeEventListener('click', noHandler);
-    window.removeEventListener('keydown', escHandler);
-  }
-
-  function yesHandler() { cleanup(); onConfirm(); }
-  function noHandler() { cleanup(); }
-  function escHandler(e) { if (e.key === 'Escape') { cleanup(); } }
-
-  confirmYes.addEventListener('click', yesHandler);
-  confirmNo.addEventListener('click', noHandler);
-  window.addEventListener('keydown', escHandler);
-}
-
-function clearLeaderboard(){
-  showConfirm('Clear all leaderboard entries?', ()=>{
-    localStorage.removeItem(scoresKey);
-    renderLeaderboard();
-    const saveMsg = document.getElementById('saveMsg');
-    if (saveMsg) saveMsg.textContent = 'Leaderboard cleared';
-  });
-}
-
-if (clearBtn) clearBtn.addEventListener('click', clearLeaderboard);
 
 if (restartBtn) {
   restartBtn.addEventListener('click', () => {

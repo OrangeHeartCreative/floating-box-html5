@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Floating Box</title>
   <link rel="stylesheet" href="style.css">
- </head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
 <body>
   <div id="gameWrap" class="game-wrap">
     <div id="titleScreen" class="title-screen">
@@ -13,11 +16,7 @@
       <button id="startGame" type="button" autofocus>Start Game</button>
       <div class="controls-hint">Press Space to thrust · ← / → or A / D to move · P to pause</div>
     </div>
-<<<<<<< HEAD
     <canvas id="game" style="display:none" tabindex="0"></canvas>
-=======
-    <canvas id="game" style="display:none"></canvas>
->>>>>>> 84ac543e83aec68135afdfd53d8ef5bf6cb95071
   </div>
   <div class="hint">Press Space to thrust. Use ←/→ or A/D to move. Press P to pause.</div>
   <div class="score" id="score">Score: 0</div>
@@ -34,24 +33,11 @@
       </div>
       <div id="saveMsg" class="save-msg" aria-live="polite"></div>
       <div class="leaderboard" id="leaderboard">
-        <div class="leaderboard-header">
-          <h2>Leaderboard</h2>
-          <div class="leaderboard-controls">
-            <button id="clearLeaderboard" class="clear-btn">Clear</button>
-          </div>
-        </div>
+        <h2>Leaderboard</h2>
         <ol id="scoresList"></ol>
         <div id="leaderboardEmpty" class="leaderboard-empty">No scores yet</div>
       </div>
-      <div id="confirmModal" class="confirm-modal" aria-hidden="true" role="dialog" aria-modal="true">
-        <div class="confirm-panel">
-          <p id="confirmText">Are you sure?</p>
-          <div class="confirm-buttons">
-            <button id="confirmYes" class="confirm-yes">Yes</button>
-            <button id="confirmNo" class="confirm-no">Cancel</button>
-          </div>
-        </div>
-      </div>
+
     </div>
   </div>
   <script src="script.js"></script>
