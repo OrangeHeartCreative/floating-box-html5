@@ -1,49 +1,38 @@
-# Floating Box
+# BrickBreaker (previously Floating Box)
 
-A tiny demo showing a box floating in midair using a canvas animation.
+A compact HTML5 canvas game where you pilot a box, collecting bricks to earn points.
 
-Run:
+## Run
 
-Open [index.html](index.html) in your browser.
+Open [index.html](index.html) in your browser (or serve the folder on a local web server).
 
-Controls:
+## Controls
 
-- Click or press Space: apply upward thrust to the box
-- Click or press Space: apply upward thrust to the box
-- Left/Right arrows or `A`/`D`: move box horizontally
-- Press `P`: toggle pause
+- Press `Space`: thrust (upward impulse)
+- Left/Right arrows or `A` / `D`: move left/right
+- Press `P`: pause / resume
 
-Airtime
+## Title Screen
 
-- A small timer in the top-right shows how long the box stays away from the platform.
-- The display shows the current airtime while airborne and the best (longest) airtime.
+- The game now shows a title screen (`BrickBreaker`) inside the play area. Press `Start Game` to begin.
 
+## Gameplay Notes
 
-## Recent Updates
+- The hero box is slightly smaller than earlier and starts on the ground when the game begins.
+- Obstacles (bricks) move slowly left/right; some also bob up/down within their spawn band.
+- Collect bricks to earn points; clearing all bricks respawns a new set after a short delay.
+- A small airtime indicator in the top-right shows current and best airtime.
 
-### 2026-02-23
-- Fixed all Codacy/ESLint numeric literal warnings (canonical forms, constants)
-- Replaced insecure Math.random usages with window.crypto-based secure random helpers
-- Refactored loops for code style and security
-- Declared browser globals for ESLint compliance
-- Removed unused variables and silenced debug logs
-- Improved object injection safety
-- Fixed all declaration/statement errors and unused variable warnings
-- All random number generation is now cryptographically secure
-- Improved leaderboard logic and UI for clarity and fairness
-- Improved game robustness and maintainability
-- Fixed all known gameplay bugs and improved collision/physics accuracy
-- Enhanced security and code quality for future extensibility
-- Fixed critical syntax errors (extra braces) that caused the game to not load (black screen)
-- Restored full game functionality and rendering
+## Leaderboard
 
-### Gameplay Changes
-- Leaderboard now saves top 50 scores, sorted by airtime and points
-- Game Over overlay now reliably shows final airtime and score
-- All random events (obstacle placement, particle effects) are now fair and secure
-- Improved collision detection and physics for more consistent gameplay
-- Audio feedback is more reliable and robust
-- Game is now more resistant to exploits and browser quirks
+- After Game Over you can enter 3-character initials and submit your score. The leaderboard stores the top 50 entries (sorted by airtime, then points) in `localStorage`.
 
-These changes make the game more secure, fair, and enjoyable, while ensuring the codebase is robust and maintainable for future updates. The most recent fixes resolved a critical bug that prevented the game from running, so the game is now fully functional again.
+## Recent Notes (2026-02-23)
+
+- Title screen and start flow added; the game no longer responds to controls until you press `Start Game`.
+- Controls and hints were updated to match gameplay (no more click-to-thrust).
+- Improved obstacle movement: horizontal drift plus optional vertical bobbing.
+- UI and CSS tweaks to better match the game's aesthetic.
+
+If you want me to add runnable build scripts or a demo server command, I can add a small `README` section with `python -m http.server` or `npx serve` examples.
 
