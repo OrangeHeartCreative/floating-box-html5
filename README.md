@@ -33,6 +33,3 @@ Open [index.html](index.html) in your browser (or serve the folder on a local we
 - Controls and hints were updated to match gameplay (no more click-to-thrust).
 - Improved obstacle movement: horizontal drift plus optional vertical bobbing.
 - UI and CSS tweaks to better match the game's aesthetic.
-
-If you want me to add runnable build scripts or a demo server command, I can add a small `README` section with `python -m http.server` or `npx serve` examples.
-
