@@ -19,7 +19,7 @@ python3 -m http.server 8000
 
 ## Leaderboard
 
-After Game Over you can enter 3-character initials and submit your score. The leaderboard stores the top 50 entries in `localStorage` and now ranks by points (primary) then airtime (secondary).
+After Game Over you can enter 3-character initials and submit your score. The leaderboard stores the top 50 entries in `localStorage` and ranks by points (primary) then airtime (secondary).
 
 ## Dev / Testing Utilities
 
@@ -39,9 +39,11 @@ ffmpeg -i floating-box-trailer.webm -c:v libx264 -crf 18 -preset medium trailer.
 ## Recent Changes (2026-02-23)
 
 - Leaderboard: switched primary ranking to points to prevent airtime exploits.
+- Obstacles: reduced default count to 6, obstacles now physically bump each other (exchange velocities) instead of disintegrating on contact.
+- Spawn logic: obstacles are placed to avoid overlapping on spawn (attempts multiple placements), preventing immediate collisions at start.
 - Added `test_smoke.html` and `record_walkthrough.html` to aid validation and create trailers.
 - Fixed start/title flow and improved obstacle behavior.
 
 ---
 
-If you'd like, I can commit and push this change to `main` and optionally convert the recorded WebM to MP4 here (requires `ffmpeg`).
+If you'd like, I can open a pull request with this change.
