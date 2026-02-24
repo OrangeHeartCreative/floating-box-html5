@@ -1,0 +1,53 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Floating Box - Scoring Smoke Test</title>
+  <style>body{font-family:system-ui,Arial;padding:20px} pre{background:#111;color:#0f0;padding:12px}</style>
+</head>
+<body>
+  <h1>Scoring Smoke Test</h1>
+  <p id="status">Initializing...</p>
+  <pre id="result">(waiting)</pre>
+
+  <!-- Minimal DOM elements script.js expects -->
+  <div id="gameWrap">
+    <canvas id="game" width="640" height="480" tabindex="0" style="border:1px solid #ccc"></canvas>
+  </div>
+  <ul id="scoresList"></ul>
+  <div id="leaderboardEmpty" style="display:none">No scores</div>
+  <div id="gameOver" aria-hidden="true">
+    <span id="final-air"></span>
+    <input id="initials" />
+    <button id="submitScore">Submit</button>
+    <div id="saveMsg"></div>
+  </div>
+  <button id="startGame">Start</button>
+
+  <script src="script.js"></script>
+  <script>
+    window.addEventListener('load', function(){
+      try{
+        document.getElementById('status').textContent = 'Running smoke checks...';
+        // clear any existing scores
+        localStorage.removeItem('floating_box_scores_v1');
+        // create deterministic dates to ensure predictable ranking when searching by date
+        const t = Date.now();
+        saveScore({ initials: 'AAA', airtime: 2.00, points: 10, date: t + 1 });
+        saveScore({ initials: 'BBB', airtime: 1.00, points: 20, date: t + 2 });
+        saveScore({ initials: 'CCC', airtime: 3.00, points: 20, date: t + 3 });
+        const list = loadScores();
+        const order = list.map(x => x.initials).join(',');
+        const pass = order === 'CCC,BBB,AAA';
+        document.getElementById('result').textContent = (pass ? 'PASS: ' : 'FAIL: ') + order + '\n\nFull list:\n' + JSON.stringify(list, null, 2);
+        document.getElementById('status').textContent = 'Done';
+        console.log('Smoke test order:', order);
+      }catch(e){
+        document.getElementById('result').textContent = 'ERROR: ' + e;
+        document.getElementById('status').textContent = 'Error';
+        console.error(e);
+      }
+    });
+  </script>
+</body>
+</html>

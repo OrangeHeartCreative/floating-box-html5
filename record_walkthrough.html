@@ -1,0 +1,150 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Record Walkthrough</title>
+  <style>body{font-family:system-ui,Arial;padding:16px} button{margin:6px}</style>
+</head>
+<body>
+  <h1>Record Walkthrough</h1>
+  <p>This page will auto-start the game, simulate play, and record the canvas into a WebM you can download.</p>
+  <p id="status">Waiting...</p>
+  <button id="startRec">Start Recording Now</button>
+  <a id="download" style="display:none">Download Recording</a>
+
+  <div id="gameWrap">
+    <canvas id="game" width="800" height="480" tabindex="0" style="border:1px solid #ccc;display:block;margin-top:10px"></canvas>
+  </div>
+  <button id="startGame">Start</button>
+
+  <script src="script.js"></script>
+  <script>
+    function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+    async function runRecording() {
+      const status = document.getElementById('status');
+      const dl = document.getElementById('download');
+      status.textContent = 'Preparing...';
+
+      // ensure canvas and start button exist
+      const canvas = document.getElementById('game');
+      const startBtn = document.getElementById('startGame');
+      if (!canvas || !startBtn) { status.textContent = 'Required elements not found'; return; }
+
+      // start the game (this uses the same start flow as the real page)
+      status.textContent = 'Starting game...';
+      startBtn.click();
+      // give the engine a moment
+      await sleep(400);
+
+      // focus the canvas so key events are accepted
+      try { canvas.focus(); } catch(e) {}
+
+      // capture canvas stream
+      const stream = canvas.captureStream(60);
+      const options = { mimeType: 'video/webm;codecs=vp9' };
+      let recorder;
+      try { recorder = new MediaRecorder(stream, options); } catch (e) {
+        try { recorder = new MediaRecorder(stream); } catch (err) { status.textContent = 'MediaRecorder unsupported'; console.error(err); return; }
+      }
+
+      const chunks = [];
+      recorder.ondataavailable = (ev) => { if (ev.data && ev.data.size) chunks.push(ev.data); };
+
+      recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        dl.href = url;
+        dl.download = 'floating-box-trailer.webm';
+        dl.style.display = 'inline-block';
+        dl.textContent = 'Download Trailer (webm)';
+        status.textContent = 'Recording complete — click download to save.';
+      };
+
+      status.textContent = 'Recording...';
+      recorder.start();
+
+      // automated input sequence: simulate bursts of thrusts and occasional left/right movement
+      const totalMs = 9000; // record ~9s
+      const interval = 300;
+      let elapsed = 0;
+      const rnd = (n) => Math.floor(Math.random()*n);
+
+      const keyEvent = (type, code) => {
+        // create a more compatible keyboard event (include keyCode/which)
+        const key = code === 'Space' ? ' ' : (code === 'ArrowLeft' ? 'ArrowLeft' : (code === 'ArrowRight' ? 'ArrowRight' : code));
+        let ev;
+        try {
+          ev = new KeyboardEvent(type, { code, key, keyCode: code === 'Space' ? 32 : 0, which: code === 'Space' ? 32 : 0, bubbles: true });
+        } catch (e) {
+          ev = document.createEvent('KeyboardEvent');
+          try { ev.initKeyboardEvent(type, true, true, window, key, 0, '', false, ''); } catch (err) { /* ignore */ }
+        }
+        // dispatch on window and document for broader compatibility
+        window.dispatchEvent(ev);
+        document.dispatchEvent(ev);
+      };
+
+      const clickCanvas = () => {
+        const ev = new MouseEvent('click', { bubbles: true, cancelable: true, view: window });
+        canvas.dispatchEvent(ev);
+        // call thrust handler directly if available (fallback for synthetic event restrictions)
+        try { if (typeof window.handleClickThrust === 'function') window.handleClickThrust(); } catch(e){}
+      };
+
+      // autopilot loop: monitor the actual `box` state and thrust when low or falling
+      const autopilotInterval = 60; // ms
+      while (elapsed < totalMs) {
+        const boxState = window.box || {};
+        const baseY = (typeof window.getBaseY === 'function') ? window.getBaseY() : (canvas.height - 120);
+        const nearGround = (typeof boxState.y === 'number') && (boxState.y > baseY - 40);
+        const fallingFast = (typeof boxState.vy === 'number') && (boxState.vy > 160);
+
+        if (nearGround || fallingFast) {
+          // critical: fire a reliable thrust (click fallback + key)
+          clickCanvas();
+          // small double-tap sometimes to arrest momentum
+          if (Math.random() < 0.5) setTimeout(clickCanvas, 80 + rnd(100));
+        } else {
+          // maintain altitude with gentle, occasional thrusts
+          if (Math.random() < 0.32) clickCanvas();
+        }
+
+        // occasional lateral dodges
+        if (Math.random() < 0.22) {
+          if (Math.random() < 0.5) {
+            keyEvent('keydown','ArrowLeft');
+            setTimeout(()=>keyEvent('keyup','ArrowLeft'), 140 + rnd(180));
+          } else {
+            keyEvent('keydown','ArrowRight');
+            setTimeout(()=>keyEvent('keyup','ArrowRight'), 140 + rnd(180));
+          }
+        }
+
+        await sleep(autopilotInterval + rnd(60));
+        elapsed += autopilotInterval;
+      }
+
+      // stop recording after a small buffer
+      await sleep(350);
+      recorder.stop();
+    }
+
+    document.getElementById('startRec').addEventListener('click', async ()=>{
+      document.getElementById('startRec').disabled = true;
+      await runRecording();
+      document.getElementById('startRec').disabled = false;
+    });
+
+    // auto-run a short recording on load (but allow manual start if blocked)
+    window.addEventListener('load', ()=>{
+      document.getElementById('status').textContent = 'Ready — click "Start Recording Now" to begin.';
+      // auto-start after a brief delay so user can cancel if desired
+      setTimeout(()=>{
+        // try auto-start but don't force if user interacts
+        if (!document.hidden) document.getElementById('startRec').click();
+      }, 900);
+    });
+  </script>
+</body>
+</html>

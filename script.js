@@ -186,8 +186,9 @@ const horiz = { accel: 2400, drag: 5, spring: 4 };
 const layout = {
   groundOffset: 48, // distance from bottom of viewport to bottom of the box when resting
   obstacleBand: 260, // vertical band above the ground where obstacles can spawn
-  obstacleCount: 10,
+  obstacleCount: 6,
 };
+
 
 function getBaseY(){
   return viewH - layout.groundOffset - box.h;
@@ -206,17 +207,37 @@ function spawnObstacles(){
   for (let i=0;i<count;i++){
     const w = 40 + getRandomFloat(0, 80);
     const h = 18 + getRandomFloat(0, 30);
-    const x = getRandomFloat(0, Math.max(0, viewW - w));
-    const y = spawnMinY + getRandomFloat(0, spawnMaxY - spawnMinY);
     const colors = ['#ef4444','#f97316','#f59e0b','#10b981','#3b82f6','#8b5cf6'];
     const color = colors[getRandomInt(0, colors.length - 1)];
     const points = Math.max(1, Math.round((120 - w) / 10));
     // horizontal drift speed (slow, random direction)
-    const dx = getRandomFloat(15, 45) * (getRandomInt(0,1) === 0 ? -1 : 1);
+    const dxBase = getRandomFloat(15, 45) * (getRandomInt(0,1) === 0 ? -1 : 1);
     // ~50% of obstacles also drift vertically
-    const dy = getRandomInt(0,1) === 0
+    const dyBase = getRandomInt(0,1) === 0
       ? getRandomFloat(10, 30) * (getRandomInt(0,1) === 0 ? -1 : 1)
       : 0;
+
+    // choose a spawn position that does not overlap previously placed obstacles (or the player box)
+    let x = 0, y = spawnMinY;
+    let tries = 0;
+    const maxTries = 80;
+    let placed = false;
+    while (!placed && tries < maxTries) {
+      x = getRandomFloat(0, Math.max(0, viewW - w));
+      y = spawnMinY + getRandomFloat(0, spawnMaxY - spawnMinY);
+      const candidate = { x, y, w, h };
+      let overlap = false;
+      for (const other of obstacles) {
+        if (rectsIntersect(candidate, other)) { overlap = true; break; }
+      }
+      // also avoid spawning directly on top of the hero box
+      if (!overlap && rectsIntersect(candidate, box)) overlap = true;
+      if (!overlap) placed = true;
+      tries++;
+    }
+    // if we failed to find a non-overlapping spot after many tries, accept the last position
+    const dx = dxBase;
+    const dy = dyBase;
     obstacles.push({x,y,w,h,color,points,dx,dy,spawnMinY,spawnMaxY});
   }
 }
@@ -322,8 +343,8 @@ function saveScore(entry){
   e.date = Number(e.date) || Date.now();
 
   list.push(e);
-  // sort primarily by airtime, then by points
-  list.sort((a,b)=> (b.airtime - a.airtime) || (b.points - a.points));
+  // sort primarily by points, then by airtime
+  list.sort((a,b)=> (b.points - a.points) || (b.airtime - a.airtime));
   const trimmed = list.slice(0,50);
   localStorage.setItem(scoresKey, JSON.stringify(trimmed));
   return trimmed;
@@ -333,6 +354,8 @@ function renderLeaderboard() {
   const listEl = document.getElementById('scoresList');
   if (!listEl) return;
   const scores = loadScores();
+  // ensure leaderboard shown sorted by points (primary) then airtime
+  scores.sort((a,b)=> (b.points - a.points) || (b.airtime - a.airtime));
   listEl.innerHTML = '';
   if (!scores.length) {
     if (leaderboardEmptyEl) leaderboardEmptyEl.style.display = 'block';
@@ -354,15 +377,16 @@ function renderLeaderboard() {
     const pointsNum = Number(s.points) || 0;
     const meta = document.createElement('span');
     meta.className = 'meta';
-    const airt = document.createElement('span');
-    airt.className = 'airtime-val';
-    airt.textContent = `${airtimeNum.toFixed(2)}s`;
+    // show points first (primary ranking key), then airtime
     const pts = document.createElement('span');
     pts.className = 'points-val';
     pts.textContent = `${pointsNum}pts`;
-    meta.appendChild(airt);
-    meta.appendChild(document.createTextNode(' • '));
+    const airt = document.createElement('span');
+    airt.className = 'airtime-val';
+    airt.textContent = `${airtimeNum.toFixed(2)}s`;
     meta.appendChild(pts);
+    meta.appendChild(document.createTextNode(' • '));
+    meta.appendChild(airt);
     li.appendChild(medal);
     li.appendChild(name);
     li.appendChild(meta);
@@ -445,6 +469,41 @@ function update(dt){
         if (ob.y + ob.h > ob.spawnMaxY) { ob.y = ob.spawnMaxY - ob.h; ob.dy = -Math.abs(ob.dy); }
       } else {
         ob.y = ob.spawnMinY; ob.dy = 0; // obstacle fills the band; pin it
+      }
+    }
+  }
+
+  // obstacle-obstacle collisions: bump and exchange velocity (no disintegration)
+  for (let i = 0; i < obstacles.length; i++) {
+    for (let j = i + 1; j < obstacles.length; j++) {
+      const a = obstacles[i];
+      const b = obstacles[j];
+      if (rectsIntersect(a, b)) {
+        // compute overlap extents
+        const overlapX = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
+        const overlapY = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
+        if (overlapX < overlapY) {
+          // separate horizontally
+          const push = overlapX / 2 + 0.5;
+          if (a.x < b.x) { a.x -= push; b.x += push; } else { a.x += push; b.x -= push; }
+          // swap horizontal velocities with slight damping
+          const t = a.dx; a.dx = b.dx * 0.9; b.dx = t * 0.9;
+        } else {
+          // separate vertically
+          const push = overlapY / 2 + 0.5;
+          if (a.y < b.y) { a.y -= push; b.y += push; } else { a.y += push; b.y -= push; }
+          const t = a.dy; a.dy = b.dy * 0.9; b.dy = t * 0.9;
+        }
+        // small random perturbation to avoid stuck pairs
+        a.dx += getRandomFloat(-10, 10);
+        b.dx += getRandomFloat(-10, 10);
+        a.dy += getRandomFloat(-5, 5);
+        b.dy += getRandomFloat(-5, 5);
+        // clamp speeds
+        a.dx = Math.max(-240, Math.min(240, a.dx));
+        b.dx = Math.max(-240, Math.min(240, b.dx));
+        a.dy = Math.max(-120, Math.min(120, a.dy));
+        b.dy = Math.max(-120, Math.min(120, b.dy));
       }
     }
   }
@@ -679,7 +738,8 @@ function hideGameOver(){
   paused = false;
 }
 
-submitBtn.addEventListener('click', () => {
+if (submitBtn) {
+  submitBtn.addEventListener('click', () => {
   let initials = initialsEl.value.toUpperCase().replace(/[^A-Z]/g,'').slice(0,3);
   if (!initials) initials = '---';
   initialsEl.value = initials;
@@ -699,7 +759,8 @@ submitBtn.addEventListener('click', () => {
   const saveMsg = document.getElementById('saveMsg');
   if (saveMsg) saveMsg.textContent = idx >= 0 ? `Saved — rank #${idx+1}` : 'Saved';
   console.log('Score submitted', { initials, airtime: airtimeVal, points: pointsVal, rank: idx+1 });
-});
+  });
+}
 
 function showConfirm(message, onConfirm) {
   if (!confirmModal) return onConfirm();
@@ -734,7 +795,8 @@ function clearLeaderboard(){
 
 if (clearBtn) clearBtn.addEventListener('click', clearLeaderboard);
 
-restartBtn.addEventListener('click', () => {
+if (restartBtn) {
+  restartBtn.addEventListener('click', () => {
   // reset box position and state
   alignBoxToGround();
   box.vx = 0;
@@ -746,12 +808,12 @@ restartBtn.addEventListener('click', () => {
   respawnTimer = 0;
   spawnObstacles();
   hideGameOver();
-});
+  });
+}
 
 // Title screen logic
 const titleScreen = document.getElementById('titleScreen');
 const startGameButton = document.getElementById('startGame');
-<<<<<<< HEAD
 const canvasEl = document.getElementById('game');
 
 function startGame(e) {
@@ -761,19 +823,10 @@ function startGame(e) {
     canvasEl.style.display = 'block';
     try { canvasEl.focus(); } catch (err) {}
   }
-=======
-
-if (startGameButton) startGameButton.addEventListener('click', () => {
-  // hide title overlay and show the canvas inside the play area
-  if (titleScreen) titleScreen.style.display = 'none';
-  const canvasEl = document.getElementById('game');
-  if (canvasEl) canvasEl.style.display = 'block';
->>>>>>> 84ac543e83aec68135afdfd53d8ef5bf6cb95071
   // Now that the canvas is visible, resize canvas and set up the game properly
   resize();
   alignBoxToGround();
   spawnObstacles();
-<<<<<<< HEAD
   // reset loop timing to avoid large dt after the page was idle or in fullscreen transition
   last = performance.now();
   gameStarted = true;
@@ -786,13 +839,6 @@ if (startGameButton) {
   startGameButton.addEventListener('pointerdown', startGame);
   startGameButton.addEventListener('touchstart', startGame, { passive: false });
 }
-=======
-  gameStarted = true;
-  paused = false;
-});
-  last = performance.now();
-});
->>>>>>> 84ac543e83aec68135afdfd53d8ef5bf6cb95071
 
 // Prevent the game from running until the start button is clicked
 paused = true;

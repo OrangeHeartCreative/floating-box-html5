@@ -1,45 +1,66 @@
 # BrickBreaker (previously Floating Box)
 
-A compact HTML5 canvas game where you pilot a box, collecting bricks to earn points.
+A compact HTML5 canvas game where you pilot a box and collect obstacles for points.
 
 ## Run
 
-Open [index.html](index.html) in your browser (or serve the folder on a local web server).
+Serve the project folder and open the game in your browser:
+
+```bash
+python3 -m http.server 8000
+# then open http://127.0.0.1:8000/floating-box-html5/
+```
 
 ## Controls
 
-- Press `Space`: thrust (upward impulse)
+- `Space` or click/tap: thrust (upward impulse)
 - Left/Right arrows or `A` / `D`: move left/right
-- Press `P`: pause / resume
+# BrickBreaker (previously Floating Box)
 
-## Title Screen
+A compact HTML5 canvas game where you pilot a box and collect obstacles for points.
 
-- The game now shows a title screen (`BrickBreaker`) inside the play area. Press `Start Game` to begin.
+## Run
 
-## Gameplay Notes
+Serve the project folder and open the game in your browser:
 
-- The hero box is slightly smaller than earlier and starts on the ground when the game begins.
-- Obstacles (bricks) move slowly left/right; some also bob up/down within their spawn band.
-- Collect bricks to earn points; clearing all bricks respawns a new set after a short delay.
-- A small airtime indicator in the top-right shows current and best airtime.
+```bash
+python3 -m http.server 8000
+# then open http://127.0.0.1:8000/floating-box-html5/
+```
+
+## Controls
+
+- `Space` or click/tap: thrust (upward impulse)
+- Left/Right arrows or `A` / `D`: move left/right
+- `P`: pause / resume
 
 ## Leaderboard
 
-- After Game Over you can enter 3-character initials and submit your score. The leaderboard stores the top 50 entries (sorted by airtime, then points) in `localStorage`.
+After Game Over you can enter 3-character initials and submit your score. The leaderboard stores the top 50 entries in `localStorage` and ranks by points (primary) then airtime (secondary).
 
-## Recent Notes (2026-02-23)
-<<<<<<< HEAD
+## Dev / Testing Utilities
 
-- Title screen and start flow added; the game no longer responds to controls until you press `Start Game`.
-- Controls and hints were updated to match gameplay (no more click-to-thrust).
-- Improved obstacle movement: horizontal drift plus optional vertical bobbing.
-- UI and CSS tweaks to better match the game's aesthetic.
+- `test_smoke.html` — a small smoke test page that programmatically verifies leaderboard sorting.
+- `record_walkthrough.html` — an autopilot + recorder page that auto-runs the game and records the canvas to a downloadable WebM (`floating-box-trailer.webm`). Useful for generating trailers.
 
-If you want me to add runnable build scripts or a demo server command, I can add a small `README` section with `python -m http.server` or `npx serve` examples.
-=======
->>>>>>> 84ac543e83aec68135afdfd53d8ef5bf6cb95071
+## Recording / Trailer
 
-- Title screen and start flow added; the game no longer responds to controls until you press `Start Game`.
-- Controls and hints were updated to match gameplay (no more click-to-thrust).
-- Improved obstacle movement: horizontal drift plus optional vertical bobbing.
-- UI and CSS tweaks to better match the game's aesthetic.
+Open `record_walkthrough.html` in a browser (served from the same folder). It will auto-start a short autopilot run and produce a WebM you can download.
+
+To convert to MP4 (optional):
+
+```bash
+ffmpeg -i floating-box-trailer.webm -c:v libx264 -crf 18 -preset medium trailer.mp4
+```
+
+## Recent Changes (2026-02-23)
+
+- Leaderboard: switched primary ranking to points to prevent airtime exploits.
+- Obstacles: reduced default count to 6, obstacles now physically bump each other (exchange velocities) instead of disintegrating on contact.
+- Spawn logic: obstacles are placed to avoid overlapping on spawn (attempts multiple placements), preventing immediate collisions at start.
+- Added `test_smoke.html` and `record_walkthrough.html` to aid validation and create trailers.
+- Fixed start/title flow and improved obstacle behavior.
+
+---
+
+If you'd like, I can open a pull request with this change.
