@@ -751,21 +751,31 @@ restartBtn.addEventListener('click', () => {
 // Title screen logic
 const titleScreen = document.getElementById('titleScreen');
 const startGameButton = document.getElementById('startGame');
+const canvasEl = document.getElementById('game');
 
-if (startGameButton) startGameButton.addEventListener('click', () => {
-  // hide title overlay and show the canvas inside the play area
+function startGame(e) {
+  try { if (e && typeof e.preventDefault === 'function') e.preventDefault(); } catch (err) {}
   if (titleScreen) titleScreen.style.display = 'none';
-  const canvasEl = document.getElementById('game');
-  if (canvasEl) canvasEl.style.display = 'block';
+  if (canvasEl) {
+    canvasEl.style.display = 'block';
+    try { canvasEl.focus(); } catch (err) {}
+  }
   // Now that the canvas is visible, resize canvas and set up the game properly
   resize();
   alignBoxToGround();
   spawnObstacles();
+  // reset loop timing to avoid large dt after the page was idle or in fullscreen transition
+  last = performance.now();
   gameStarted = true;
   paused = false;
-});
-  last = performance.now();
-});
+  try { if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); } catch(e){}
+}
+
+if (startGameButton) {
+  startGameButton.addEventListener('click', startGame);
+  startGameButton.addEventListener('pointerdown', startGame);
+  startGameButton.addEventListener('touchstart', startGame, { passive: false });
+}
 
 // Prevent the game from running until the start button is clicked
 paused = true;
