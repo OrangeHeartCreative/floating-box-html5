@@ -113,8 +113,8 @@ const physics = {
 };
 
 const box = {
-  w: 120,
-  h: 80,
+  w: 80,
+  h: 54,
   x: 0,
   y: 0,
   vx: 0,
@@ -129,12 +129,12 @@ function alignBoxToGround(){
 
 let last = performance.now();
 let paused = false;
+let gameStarted = false;
 
 // Controls: click/Space to thrust; Arrow keys / A D for horizontal movement
 const controls = { left: false, right: false };
-canvas.addEventListener('click', (e) => {
+canvas.removeEventListener('click', (e) => {
   box.vy -= physics.thrust;
-  // resume/prime audio on first interaction
   try { if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); } catch(e){}
   playThrust();
 });
@@ -142,6 +142,8 @@ canvas.addEventListener('click', (e) => {
 window.addEventListener('keydown', (e) => {
   // If the initials input is focused, allow normal typing (don't treat A/D as controls)
   if (initialsEl && document.activeElement === initialsEl) return;
+  // Ignore game input until the game has started
+  if (!gameStarted) return;
   if (e.code === 'Space') {
     e.preventDefault();
     box.vy -= physics.thrust;
@@ -198,7 +200,13 @@ function spawnObstacles(){
     const colors = ['#ef4444','#f97316','#f59e0b','#10b981','#3b82f6','#8b5cf6'];
     const color = colors[getRandomInt(0, colors.length - 1)];
     const points = Math.max(1, Math.round((120 - w) / 10));
-    obstacles.push({x,y,w,h,color,points});
+    // horizontal drift speed (slow, random direction)
+    const dx = getRandomFloat(15, 45) * (getRandomInt(0,1) === 0 ? -1 : 1);
+    // ~50% of obstacles also drift vertically
+    const dy = getRandomInt(0,1) === 0
+      ? getRandomFloat(10, 30) * (getRandomInt(0,1) === 0 ? -1 : 1)
+      : 0;
+    obstacles.push({x,y,w,h,color,points,dx,dy,spawnMinY,spawnMaxY});
   }
 }
 
@@ -379,6 +387,8 @@ window.addEventListener('resize', () => {
 });
 
 function update(dt){
+  if (paused) return; // Prevent updates if the game is paused
+
   // vertical integration
   box.vy += physics.gravity * dt;
 
@@ -408,6 +418,19 @@ function update(dt){
   // accumulate airtime while flagged inAir
   if (inAir) {
     currentAirtime += dt;
+  }
+
+  // move obstacles and bounce off screen edges
+  for (const ob of obstacles) {
+    ob.x += ob.dx * dt;
+    if (ob.x < 0) { ob.x = 0; ob.dx = Math.abs(ob.dx); }
+    if (ob.x + ob.w > viewW) { ob.x = viewW - ob.w; ob.dx = -Math.abs(ob.dx); }
+    // vertical drift (clamped to the obstacle spawn band)
+    if (ob.dy) {
+      ob.y += ob.dy * dt;
+      if (ob.y < ob.spawnMinY) { ob.y = ob.spawnMinY; ob.dy = Math.abs(ob.dy); }
+      if (ob.y + ob.h > ob.spawnMaxY) { ob.y = ob.spawnMaxY - ob.h; ob.dy = -Math.abs(ob.dy); }
+    }
   }
 
   // check collisions with obstacles -> award points and remove obstacle
@@ -616,6 +639,8 @@ requestAnimationFrame(loop);
 
 function showGameOver(airtime){
   if (!gameOverEl || gameOverShown) return;
+  // hide title screen if it's still present to ensure overlay is clickable
+  try{ if (titleScreen) titleScreen.style.display = 'none'; }catch(e){}
   gameOverShown = true;
   paused = true;
   finalAirtimeValue = Number(airtime) || 0;
@@ -706,3 +731,24 @@ restartBtn.addEventListener('click', () => {
   spawnObstacles();
   hideGameOver();
 });
+
+// Title screen logic
+const titleScreen = document.getElementById('titleScreen');
+const startGameButton = document.getElementById('startGame');
+
+startGameButton.addEventListener('click', () => {
+  // hide title overlay and show the canvas inside the play area
+  titleScreen.style.display = 'none';
+  const canvasEl = document.getElementById('game');
+  if (canvasEl) canvasEl.style.display = 'block';
+  // Now that the canvas is visible, resize canvas and set up the game properly
+  resize();
+  alignBoxToGround();
+  spawnObstacles();
+  gameStarted = true;
+  paused = false;
+  last = performance.now();
+});
+
+// Prevent the game from running until the start button is clicked
+paused = true;
