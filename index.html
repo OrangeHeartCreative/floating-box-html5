@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Floating Box</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="preload" href="fonts/press-start-2p.woff2" as="font" type="font/woff2" crossorigin>
 </head>
 <body>
   <div id="gameWrap" class="game-wrap">
@@ -15,7 +16,6 @@
     </div>
     <canvas id="game" style="display:none" tabindex="0"></canvas>
   </div>
-  <div class="hint">Press Space to thrust. Use ←/→ or A/D to move. Press P to pause.</div>
   <div class="score" id="score">Score: 0</div>
   <div class="airtime" id="airtime">Air: 0.00s (best: 0.00s)</div>
   <div id="gameOver" class="overlay" aria-hidden="true">

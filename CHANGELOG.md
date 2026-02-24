@@ -21,6 +21,9 @@
 - Leaderboard now ranks by **points** (primary) then airtime (secondary) to prevent airtime exploits.
 - Title/start flow refined so the game only accepts input after pressing `Start Game`.
 
+- Replaced bundled TTF with optimized WOFF2 and removed the TTF to reduce
+	package size and ensure the site uses a single self-hosted font asset.
+
 ### Fixed
 - Resolved a merge conflict in `script.js` and added safety checks for optional DOM elements used by test/recorder pages.
 - Improved synthetic input handling for the recorder page so autopilot commands are more reliable across browsers.

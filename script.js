@@ -103,6 +103,15 @@ function resize(){
 }
 window.addEventListener('resize', resize);
 resize();
+// Kick off a non-blocking load of the webfont so it downloads early
+// without showing a loading screen. This helps ensure the font is
+// available by the time the canvas first renders.
+try {
+  if (document.fonts && typeof document.fonts.load === 'function') {
+    // request a typical size to ensure the face is loaded
+    document.fonts.load('12px "Press Start 2P"').catch(()=>{});
+  }
+} catch (e) {}
 // (obstacles will be spawned after box and DOM are initialized)
 
 // Physics parameters
@@ -692,7 +701,26 @@ function loop(t){
   requestAnimationFrame(loop);
 }
 
-requestAnimationFrame(loop);
+// Start the render loop. Wait for fonts to load so canvas text uses the
+// self-hosted webfont consistently. Use a short timeout fallback so we
+// never block rendering indefinitely if the Fonts API isn't available
+// or a font fails to load.
+function startRenderLoop() {
+  requestAnimationFrame(loop);
+}
+
+if (document.fonts && document.fonts.ready && typeof document.fonts.ready.then === 'function') {
+  const fontTimeout = setTimeout(startRenderLoop, 2000);
+  document.fonts.ready.then(() => {
+    clearTimeout(fontTimeout);
+    startRenderLoop();
+  }).catch(() => {
+    clearTimeout(fontTimeout);
+    startRenderLoop();
+  });
+} else {
+  startRenderLoop();
+}
 
 function showGameOver(airtime){
   if (!gameOverEl || gameOverShown) return;
