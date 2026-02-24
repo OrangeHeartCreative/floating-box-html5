@@ -13,9 +13,9 @@ python3 -m http.server 8000
 
 ## Controls
 
-- `Space` or click/tap: thrust (upward impulse)
+- `Space`: thrust (upward impulse)
 - Left/Right arrows or `A` / `D`: move left/right
-<<<<<<< HEAD
+
 # BrickBreaker (previously Floating Box)
 
 A compact HTML5 canvas game where you pilot a box and collect obstacles for points.
