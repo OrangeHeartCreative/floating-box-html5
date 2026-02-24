@@ -20,6 +20,9 @@
   <script src="script.js"></script>
   <script>
     function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+    // persistent URL and timer tracking across runs
+    let lastUrl = null;
+    let pendingTimers = new Set();
 
     async function runRecording() {
       const status = document.getElementById('status');
@@ -47,42 +50,68 @@
       try { recorder = new MediaRecorder(stream, options); } catch (e) {
         try { recorder = new MediaRecorder(stream); } catch (err) { status.textContent = 'MediaRecorder unsupported'; console.error(err); return; }
       }
-
+      let lastUrl = null;
       const chunks = [];
       recorder.ondataavailable = (ev) => { if (ev.data && ev.data.size) chunks.push(ev.data); };
 
       recorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'video/webm' });
+        // clear any pending timers to avoid synthetic events after stop
+        try {
+          for (const id of pendingTimers) clearTimeout(id);
+        } catch (e) {}
+        pendingTimers.clear();
+        // use recorder.mimeType if available to construct the Blob
+        const mime = recorder && recorder.mimeType ? recorder.mimeType : 'video/webm';
+        const blob = new Blob(chunks, { type: mime });
+        // revoke previous URL if present
+        try { if (lastUrl) { URL.revokeObjectURL(lastUrl); lastUrl = null; } } catch(e){}
         const url = URL.createObjectURL(blob);
+        lastUrl = url;
         dl.href = url;
         dl.download = 'floating-box-trailer.webm';
         dl.style.display = 'inline-block';
         dl.textContent = 'Download Trailer (webm)';
         status.textContent = 'Recording complete — click download to save.';
+
+        // revoke the URL after the user clicks download (one-time listener)
+        const onClick = () => { try { if (lastUrl) URL.revokeObjectURL(lastUrl); } catch(e){}; lastUrl = null; dl.removeEventListener('click', onClick); };
+        dl.addEventListener('click', onClick, { once: true });
       };
 
       status.textContent = 'Recording...';
       recorder.start();
 
+      // clear any previously scheduled timers before starting
+      try { for (const id of pendingTimers) clearTimeout(id); } catch(e){}
+      pendingTimers.clear();
+
       // automated input sequence: simulate bursts of thrusts and occasional left/right movement
       const totalMs = 9000; // record ~9s
-      const interval = 300;
       let elapsed = 0;
       const rnd = (n) => Math.floor(Math.random()*n);
 
-      const keyEvent = (type, code) => {
-        // create a more compatible keyboard event (include keyCode/which)
+      const createKeyboardEvent = (type, code) => {
         const key = code === 'Space' ? ' ' : (code === 'ArrowLeft' ? 'ArrowLeft' : (code === 'ArrowRight' ? 'ArrowRight' : code));
+        const keyCodeMap = { 'Space': 32, 'ArrowLeft': 37, 'ArrowRight': 39 };
+        const numeric = keyCodeMap[code] || 0;
         let ev;
         try {
-          ev = new KeyboardEvent(type, { code, key, keyCode: code === 'Space' ? 32 : 0, which: code === 'Space' ? 32 : 0, bubbles: true });
+          ev = new KeyboardEvent(type, { code, key, keyCode: numeric, which: numeric, bubbles: true });
         } catch (e) {
-          ev = document.createEvent('KeyboardEvent');
-          try { ev.initKeyboardEvent(type, true, true, window, key, 0, '', false, ''); } catch (err) { /* ignore */ }
+          try {
+            ev = document.createEvent('KeyboardEvent');
+            ev.initKeyboardEvent(type, true, true, window, key, numeric, '', false, '');
+          } catch (err) {
+            ev = { type, code, key, keyCode: numeric, which: numeric };
+          }
         }
-        // dispatch on window and document for broader compatibility
-        window.dispatchEvent(ev);
-        document.dispatchEvent(ev);
+        return ev;
+      };
+
+      const keyEvent = (type, code) => {
+        const ev = createKeyboardEvent(type, code);
+        // dispatch once on document for broader compatibility
+        try { document.dispatchEvent(ev); } catch(e) {}
       };
 
       const clickCanvas = () => {
@@ -94,7 +123,8 @@
 
       // autopilot loop: monitor the actual `box` state and thrust when low or falling
       const autopilotInterval = 60; // ms
-      while (elapsed < totalMs) {
+      const startTime = Date.now();
+      while ((Date.now() - startTime) < totalMs) {
         const boxState = window.box || {};
         const baseY = (typeof window.getBaseY === 'function') ? window.getBaseY() : (canvas.height - 120);
         const nearGround = (typeof boxState.y === 'number') && (boxState.y > baseY - 40);
@@ -104,7 +134,7 @@
           // critical: fire a reliable thrust (click fallback + key)
           clickCanvas();
           // small double-tap sometimes to arrest momentum
-          if (Math.random() < 0.5) setTimeout(clickCanvas, 80 + rnd(100));
+          if (Math.random() < 0.5) pendingTimers.add(setTimeout(clickCanvas, 80 + rnd(100)));
         } else {
           // maintain altitude with gentle, occasional thrusts
           if (Math.random() < 0.32) clickCanvas();
@@ -114,19 +144,21 @@
         if (Math.random() < 0.22) {
           if (Math.random() < 0.5) {
             keyEvent('keydown','ArrowLeft');
-            setTimeout(()=>keyEvent('keyup','ArrowLeft'), 140 + rnd(180));
+            pendingTimers.add(setTimeout(()=>keyEvent('keyup','ArrowLeft'), 140 + rnd(180)));
           } else {
             keyEvent('keydown','ArrowRight');
-            setTimeout(()=>keyEvent('keyup','ArrowRight'), 140 + rnd(180));
+            pendingTimers.add(setTimeout(()=>keyEvent('keyup','ArrowRight'), 140 + rnd(180)));
           }
         }
 
         await sleep(autopilotInterval + rnd(60));
-        elapsed += autopilotInterval;
       }
 
       // stop recording after a small buffer
       await sleep(350);
+      // clear any scheduled timers to avoid post-stop synthetic events
+      try { for (const id of pendingTimers) clearTimeout(id); } catch(e){}
+      pendingTimers.clear();
       recorder.stop();
     }
 

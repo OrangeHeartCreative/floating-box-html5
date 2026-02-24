@@ -63,4 +63,3 @@ ffmpeg -i floating-box-trailer.webm -c:v libx264 -crf 18 -preset medium trailer.
 
 ---
 
-If you'd like, I can open a pull request with this change.

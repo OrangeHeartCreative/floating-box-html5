@@ -1,4 +1,8 @@
 html,body{height:100%;margin:0}
+/* use border-box globally to avoid overflow from width + padding */
+*,*::before,*::after{box-sizing:border-box}
+/* local self-hosted pixel font */
+@font-face{font-family:"Press Start 2P";src: url("./press-start-2p.woff2") format("woff2");font-display:swap;font-weight:400;font-style:normal}
 body{display:flex;align-items:center;justify-content:center;background:#000;overflow:hidden;font-family:'Press Start 2P',Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;-webkit-font-smoothing:none;text-rendering:optimizeLegibility}
 /* responsive game wrapper to match itch.io recommended embed 960x640 */
 .game-wrap{width:100%;max-width:960px;aspect-ratio:960/640;position:relative}
