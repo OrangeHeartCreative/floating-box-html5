@@ -592,7 +592,7 @@ function draw(){
   for (const p of particles){
     const t = Math.max(0, Math.min(1, p.life / p.ttl));
     ctx.save();
-    ctx.globalAlpha = t;
+    ctx.globalApha = t;
     ctx.translate(p.x, p.y);
     if (p.rot) ctx.rotate(p.rot);
     ctx.fillStyle = p.color || '#fff';
@@ -751,6 +751,7 @@ restartBtn.addEventListener('click', () => {
 // Title screen logic
 const titleScreen = document.getElementById('titleScreen');
 const startGameButton = document.getElementById('startGame');
+<<<<<<< HEAD
 const canvasEl = document.getElementById('game');
 
 function startGame(e) {
@@ -760,10 +761,19 @@ function startGame(e) {
     canvasEl.style.display = 'block';
     try { canvasEl.focus(); } catch (err) {}
   }
+=======
+
+if (startGameButton) startGameButton.addEventListener('click', () => {
+  // hide title overlay and show the canvas inside the play area
+  if (titleScreen) titleScreen.style.display = 'none';
+  const canvasEl = document.getElementById('game');
+  if (canvasEl) canvasEl.style.display = 'block';
+>>>>>>> 84ac543e83aec68135afdfd53d8ef5bf6cb95071
   // Now that the canvas is visible, resize canvas and set up the game properly
   resize();
   alignBoxToGround();
   spawnObstacles();
+<<<<<<< HEAD
   // reset loop timing to avoid large dt after the page was idle or in fullscreen transition
   last = performance.now();
   gameStarted = true;
@@ -776,6 +786,13 @@ if (startGameButton) {
   startGameButton.addEventListener('pointerdown', startGame);
   startGameButton.addEventListener('touchstart', startGame, { passive: false });
 }
+=======
+  gameStarted = true;
+  paused = false;
+});
+  last = performance.now();
+});
+>>>>>>> 84ac543e83aec68135afdfd53d8ef5bf6cb95071
 
 // Prevent the game from running until the start button is clicked
 paused = true;

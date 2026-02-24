@@ -28,6 +28,7 @@ Open [index.html](index.html) in your browser (or serve the folder on a local we
 - After Game Over you can enter 3-character initials and submit your score. The leaderboard stores the top 50 entries (sorted by airtime, then points) in `localStorage`.
 
 ## Recent Notes (2026-02-23)
+<<<<<<< HEAD
 
 - Title screen and start flow added; the game no longer responds to controls until you press `Start Game`.
 - Controls and hints were updated to match gameplay (no more click-to-thrust).
@@ -35,4 +36,10 @@ Open [index.html](index.html) in your browser (or serve the folder on a local we
 - UI and CSS tweaks to better match the game's aesthetic.
 
 If you want me to add runnable build scripts or a demo server command, I can add a small `README` section with `python -m http.server` or `npx serve` examples.
+=======
+>>>>>>> 84ac543e83aec68135afdfd53d8ef5bf6cb95071
 
+- Title screen and start flow added; the game no longer responds to controls until you press `Start Game`.
+- Controls and hints were updated to match gameplay (no more click-to-thrust).
+- Improved obstacle movement: horizontal drift plus optional vertical bobbing.
+- UI and CSS tweaks to better match the game's aesthetic.
